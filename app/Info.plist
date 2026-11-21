@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>DeepSeekUsageBar</string>
+	<key>CFBundleDisplayName</key>
+	<string>DeepSeek Usage Bar</string>
+	<key>CFBundleExecutable</key>
+	<string>DeepSeekUsageBar</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.krisrimar.deepseek-usage-bar</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<!-- Bump both together with the newest release in CHANGELOG.md; tests/run.sh
+	     fails if this key and that heading disagree. -->
+	<key>CFBundleShortVersionString</key>
+	<string>0.5.0</string>
+	<key>CFBundleVersion</key>
+	<string>5</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<!-- Menu bar only: no Dock icon, no app switcher entry. -->
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>MIT</string>
+	<!-- Both endpoints are HTTPS; no transport exceptions are needed. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
+</dict>
+</plist>

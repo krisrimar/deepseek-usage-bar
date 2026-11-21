@@ -1,0 +1,86 @@
+name: Release
+
+# Tag `v0.5.0` on a commit whose Info.plist says 0.5.0, and this publishes the
+# artifacts the installer and updater expect. Nothing is uploaded unless the
+# tests pass and the version agreement checks hold.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          sw_vers
+          swift --version
+          xcode-select -p
+
+      - name: Version agreement and tests
+        run: ./tests/run.sh
+
+      - name: Tag matches the bundle version
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" app/Info.plist)
+          if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME does not match app/Info.plist $VERSION" >&2
+            exit 1
+          fi
+          echo "tag and Info.plist agree on $VERSION"
+
+      - name: Build and package
+        run: ./scripts/package.sh
+
+      - name: Check artifacts
+        run: |
+          cd dist
+          ls -lh
+          shasum -a 256 -c DeepSeekUsageBar-macos-universal.zip.sha256
+          shasum -a 256 -c DeepSeekUsageBar-macos-universal.dmg.sha256
+
+      - name: Extract release notes
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" app/Info.plist)
+          awk -v version="$VERSION" '
+            $0 ~ "^## \\[" version "\\]" { capturing = 1; next }
+            capturing && /^## \[/ { exit }
+            capturing { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/release-notes.md"
+          if [ ! -s "$RUNNER_TEMP/release-notes.md" ]; then
+            echo "DeepSeek Usage Bar $VERSION" > "$RUNNER_TEMP/release-notes.md"
+          fi
+          cat "$RUNNER_TEMP/release-notes.md"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" app/Info.plist)
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/DeepSeekUsageBar-macos-universal.zip" \
+            "dist/DeepSeekUsageBar-macos-universal.zip.sha256" \
+            "dist/DeepSeekUsageBar-macos-universal.dmg" \
+            "dist/DeepSeekUsageBar-macos-universal.dmg.sha256" \
+            "dist/install.sh" \
+            --title "DeepSeek Usage Bar $VERSION" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
+
+      - name: Summary
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" app/Info.plist)
+          {
+            echo "## DeepSeek Usage Bar $VERSION"
+            echo
+            echo "Install:"
+            echo
+            echo '```sh'
+            echo "curl -fsSL https://github.com/$GITHUB_REPOSITORY/releases/latest/download/install.sh | sh"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

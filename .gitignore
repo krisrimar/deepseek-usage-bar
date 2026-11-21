@@ -1,0 +1,9 @@
+app/build/
+.build/
+probe/out/
+*.icns
+.DS_Store
+*.har
+dist/
+.playwright-mcp/
+ds-chunks.json
