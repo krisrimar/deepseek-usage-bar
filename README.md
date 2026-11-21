@@ -16,6 +16,9 @@ They are different credentials, and neither works in place of the other.
 
 ## Install
 
+[Releases](https://github.com/krisrimar/deepseek-usage-bar/releases) holds the
+installers and their checksums. Or, from Terminal:
+
 ```sh
 curl -fsSL https://github.com/krisrimar/deepseek-usage-bar/releases/latest/download/install.sh | sh
 ```
