@@ -45,7 +45,22 @@ grep -q "static let zipAsset = \"$ZIP_ASSET\"" "$SRC/UpdateCheck.swift" ||
   { echo "  FAIL: UpdateCheck.zipAsset is not $ZIP_ASSET" >&2; exit 1; }
 grep -q "static let dmgAsset = \"$DMG_ASSET\"" "$SRC/UpdateCheck.swift" ||
   { echo "  FAIL: UpdateCheck.dmgAsset is not $DMG_ASSET" >&2; exit 1; }
-echo "  zip, checksum and dmg names agree"
+
+# The app bundle name is spelled in four places that cannot share a constant:
+# the build, the installer, the packager and the updater.
+BUNDLE_ASSET=$(sed -n 's/^BUNDLE_NAME="\([^"]*\)".*/\1/p' app/build.sh)
+INSTALL_BUNDLE=$(sed -n 's/^APP="\([^"]*\)".*/\1/p' install.sh)
+PKG_BUNDLE=$(sed -n 's/^APP_BUNDLE="\([^"]*\)".*/\1/p' scripts/package.sh)
+UPDATE_BUNDLE=$(sed -n 's/^ *static let appBundle = "\([^"]*\)".*/\1/p' "$SRC/UpdateCheck.swift")
+if [ "$BUNDLE_ASSET" != "DeepSeek Usage Bar.app" ] || \
+   [ "$INSTALL_BUNDLE" != "$BUNDLE_ASSET" ] || \
+   [ "$PKG_BUNDLE" != "$BUNDLE_ASSET" ] || \
+   [ "$UPDATE_BUNDLE" != "$BUNDLE_ASSET" ]; then
+  echo "  FAIL: the app bundle name disagrees across build/install/package/updater" >&2
+  echo "        build=$BUNDLE_ASSET install=$INSTALL_BUNDLE package=$PKG_BUNDLE updater=$UPDATE_BUNDLE" >&2
+  exit 1
+fi
+echo "  zip, checksum, dmg and bundle names agree"
 
 echo "== peak schedule and pricing =="
 swiftc -O -o "$TMP/peaktests" \

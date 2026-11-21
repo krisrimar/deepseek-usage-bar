@@ -53,7 +53,7 @@ than notarized, so a copy downloaded through a browser carries the quarantine
 flag: the first launch needs right-click → Open, or clear it yourself:
 
 ```sh
-xattr -dr com.apple.quarantine /Applications/DeepSeekUsageBar.app
+xattr -dr com.apple.quarantine "/Applications/DeepSeek Usage Bar.app"
 ```
 
 macOS 13 or later, Apple silicon or Intel (the build is universal).
@@ -197,7 +197,7 @@ credential, drops the stored token, and asks you to paste a fresh one.
 ```bash
 ./app/build.sh          # for this machine
 ./app/build.sh --universal
-open app/build/DeepSeekUsageBar.app
+open "app/build/DeepSeek Usage Bar.app"
 ```
 
 Requires the Xcode Command Line Tools. Uncomment nothing — see the toolchain
@@ -211,8 +211,8 @@ bundle is meant to be copied somewhere permanent:
 
 ```bash
 ./app/build.sh
-ditto app/build/DeepSeekUsageBar.app /Applications/DeepSeekUsageBar.app
-open /Applications/DeepSeekUsageBar.app
+ditto "app/build/DeepSeek Usage Bar.app" "/Applications/DeepSeek Usage Bar.app"
+open "/Applications/DeepSeek Usage Bar.app"
 ```
 
 `ditto` rather than `cp -R`: it preserves the bundle's metadata intact.
@@ -227,7 +227,7 @@ Login Items**, or:
 
 ```bash
 osascript -e 'tell application "System Events" to make login item at end
-  with properties {path:"/Applications/DeepSeekUsageBar.app", hidden:false}'
+  with properties {path:"/Applications/DeepSeek Usage Bar.app", hidden:false}'
 ```
 
 Preferences live in the `com.krisrimar.deepseek-usage-bar` defaults domain keyed

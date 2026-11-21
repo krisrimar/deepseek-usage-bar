@@ -15,9 +15,9 @@
 	<!-- Bump both together with the newest release in CHANGELOG.md; tests/run.sh
 	     fails if this key and that heading disagree. -->
 	<key>CFBundleShortVersionString</key>
-	<string>0.5.0</string>
+	<string>0.5.1</string>
 	<key>CFBundleVersion</key>
-	<string>5</string>
+	<string>6</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>13.0</string>
 	<!-- Menu bar only: no Dock icon, no app switcher entry. -->

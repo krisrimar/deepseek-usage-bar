@@ -135,13 +135,20 @@ final class Updater: ObservableObject {
                 throw UpdaterError.missingAssets
             }
 
-            let destination = Bundle.main.bundleURL
-            guard destination.pathExtension == "app" else {
+            let current = Bundle.main.bundleURL
+            guard current.pathExtension == "app" else {
                 throw UpdaterError.notAnApplication
             }
-            if destination.path.contains("/AppTranslocation/") {
+            if current.path.contains("/AppTranslocation/") {
                 throw UpdaterError.translocated
             }
+
+            // Install beside the running copy under the bundle name carried by
+            // the download. For an upgrade from 0.5.0 — whose bundle was
+            // `DeepSeekUsageBar.app` — this is also the rename, and the helper
+            // removes the old bundle once this process has exited.
+            let destination = current.deletingLastPathComponent()
+                .appendingPathComponent(UpdateCheck.appBundle)
             guard FileManager.default.isWritableFile(
                 atPath: destination.deletingLastPathComponent().path
             ) else {
@@ -172,11 +179,11 @@ final class Updater: ObservableObject {
             let unpacked = work.appendingPathComponent("unpacked", isDirectory: true)
             try run("/usr/bin/ditto", ["-x", "-k", zip.path, unpacked.path])
 
-            let newApp = unpacked.appendingPathComponent("DeepSeekUsageBar.app")
+            let newApp = unpacked.appendingPathComponent(UpdateCheck.appBundle)
             try validate(newApp, expecting: release.version)
 
             phase = .readyToInstall
-            try scheduleReplacement(from: newApp, to: destination)
+            try scheduleReplacement(from: newApp, to: destination, replacing: current)
             phase = .installing
 
             // Give the script a moment to start waiting on this PID before the
@@ -225,7 +232,11 @@ final class Updater: ObservableObject {
         }
     }
 
-    private func scheduleReplacement(from newApp: URL, to destination: URL) throws {
+    private func scheduleReplacement(
+        from newApp: URL,
+        to destination: URL,
+        replacing current: URL
+    ) throws {
         let script = newApp.deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("install-update.sh")
@@ -233,10 +244,14 @@ final class Updater: ObservableObject {
         // Absolute paths only: the script has no PATH of its own. The staging
         // directory is a sibling of the destination, so the final `mv` is on
         // the same volume and cannot leave a half-copied app behind.
+        //
+        // `old` is the bundle this process is running from. It differs from
+        // `dest` when installing the 0.5.1 rename over a 0.5.0 build; removing
+        // it keeps one menu bar icon, not two.
         let text = """
         #!/bin/sh
         set -eu
-        pid="$1"; new="$2"; dest="$3"
+        pid="$1"; new="$2"; dest="$3"; old="$4"
         i=0
         while kill -0 "$pid" 2>/dev/null; do
             i=$((i + 1))
@@ -248,6 +263,9 @@ final class Updater: ObservableObject {
         /usr/bin/ditto "$new" "$staging"
         rm -rf "$dest"
         mv "$staging" "$dest"
+        if [ "$old" != "$dest" ]; then
+            rm -rf "$old"
+        fi
         /usr/bin/xattr -dr com.apple.quarantine "$dest" 2>/dev/null || true
         /usr/bin/open "$dest"
         """
@@ -264,6 +282,7 @@ final class Updater: ObservableObject {
             String(ProcessInfo.processInfo.processIdentifier),
             newApp.path,
             destination.path,
+            current.path,
         ]
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice

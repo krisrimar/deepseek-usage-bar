@@ -12,6 +12,15 @@ it and the newest release heading below disagree, so the two cannot drift.
 
 Nothing yet.
 
+## [0.5.1] - 2026-11-21
+
+### Changed
+- The app bundle is named **`DeepSeek Usage Bar.app`**, matching its display
+  name, instead of `DeepSeekUsageBar.app`. The executable inside is unchanged
+  (`DeepSeekUsageBar`), so the process name and bundle identifier stay the same.
+  `install.sh` and the in-app updater both remove the old-named bundle when
+  they install this version, so an upgrade does not leave two menu bar icons.
+
 ## [0.5.0] - 2026-11-21
 
 ### Added

@@ -12,7 +12,8 @@ cd "$(dirname "$0")/.."
 
 VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" app/Info.plist)
 BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" app/Info.plist)
-APP="app/build/DeepSeekUsageBar.app"
+APP_BUNDLE="DeepSeek Usage Bar.app"
+APP="app/build/$APP_BUNDLE"
 DIST="dist"
 
 ZIP="DeepSeekUsageBar-macos-universal.zip"
@@ -38,13 +39,13 @@ PLIST_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
 # needs; `zip` alone does not, and the app would arrive damaged.
 STAGE=$(mktemp -d)
 trap 'rm -rf "$STAGE"' EXIT
-ditto "$APP" "$STAGE/DeepSeekUsageBar.app"
-ditto -c -k --keepParent "$STAGE/DeepSeekUsageBar.app" "$DIST/$ZIP"
+ditto "$APP" "$STAGE/$APP_BUNDLE"
+ditto -c -k --keepParent "$STAGE/$APP_BUNDLE" "$DIST/$ZIP"
 
 # A dmg with the usual Applications alias, for people who would rather drag
 # than curl.
 DMG_STAGE=$(mktemp -d)
-ditto "$APP" "$DMG_STAGE/DeepSeekUsageBar.app"
+ditto "$APP" "$DMG_STAGE/$APP_BUNDLE"
 ln -s /Applications "$DMG_STAGE/Applications"
 hdiutil create -quiet -volname "DeepSeek Usage Bar" \
     -srcfolder "$DMG_STAGE" -ov -format UDZO "$DIST/$DMG"

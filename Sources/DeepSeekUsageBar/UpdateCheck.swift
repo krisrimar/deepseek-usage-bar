@@ -18,6 +18,12 @@ enum UpdateCheck {
     static let checksumAsset = zipAsset + ".sha256"
     static let dmgAsset = "DeepSeekUsageBar-macos-universal.dmg"
 
+    /// The bundle's file name. The executable inside is still
+    /// `DeepSeekUsageBar`; this is the name Finder, /Applications and the
+    /// installer use. Kept here so the updater and the release scripts cannot
+    /// drift apart.
+    static let appBundle = "DeepSeek Usage Bar.app"
+
     /// A release as the updater needs it: what it is called, where its notes
     /// live, and the two downloads it is allowed to make.
     struct Release: Equatable {

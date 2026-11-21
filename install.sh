@@ -13,7 +13,7 @@
 # For testing, these change where it reads and writes:
 #   DEEPSEEK_RELEASE_URL  the release's download folder
 #                         (default: the latest GitHub release)
-#   DEEPSEEK_APP_DIR      where DeepSeekUsageBar.app goes
+#   DEEPSEEK_APP_DIR      where DeepSeek Usage Bar.app goes
 #                         (default: /Applications, or ~/Applications)
 set -eu
 
@@ -21,8 +21,11 @@ REPO="krisrimar/deepseek-usage-bar"
 BASE="${DEEPSEEK_RELEASE_URL:-https://github.com/$REPO/releases/latest/download}"
 ZIP="DeepSeekUsageBar-macos-universal.zip"
 SHA="$ZIP.sha256"
-APP="DeepSeekUsageBar.app"
+APP="DeepSeek Usage Bar.app"
 EXECUTABLE="DeepSeekUsageBar"
+# The 0.5.0 release used the no-space bundle name. An upgrade must remove that
+# copy, or the menu bar ends up with two icons.
+LEGACY_APP="DeepSeekUsageBar.app"
 
 say() { printf '%s\n' "$*"; }
 fail() {
@@ -62,15 +65,26 @@ ditto -x -k "$work/$ZIP" "$work/unzipped"
     fail "the download has no $APP in it: not installing"
 
 dest="$app_dir/$APP"
-if pgrep -f "$dest/Contents/MacOS/$EXECUTABLE" >/dev/null 2>&1; then
+legacy="$app_dir/$LEGACY_APP"
+
+quit_app() {
+    _app="$1"
+    pgrep -f "$_app/Contents/MacOS/$EXECUTABLE" >/dev/null 2>&1 || return 0
     say "Quitting the running copy…"
-    pkill -f "$dest/Contents/MacOS/$EXECUTABLE" 2>/dev/null || true
+    pkill -f "$_app/Contents/MacOS/$EXECUTABLE" 2>/dev/null || true
     i=0
-    while pgrep -f "$dest/Contents/MacOS/$EXECUTABLE" >/dev/null 2>&1; do
+    while pgrep -f "$_app/Contents/MacOS/$EXECUTABLE" >/dev/null 2>&1; do
         i=$((i + 1))
         [ "$i" -ge 50 ] && break
         sleep 0.1
     done
+}
+
+quit_app "$dest"
+if [ -d "$legacy" ] && [ "$legacy" != "$dest" ]; then
+    say "Removing the old ${LEGACY_APP}…"
+    quit_app "$legacy"
+    rm -rf "$legacy"
 fi
 
 mkdir -p "$app_dir"

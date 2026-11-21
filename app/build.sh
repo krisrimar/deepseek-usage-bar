@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build DeepSeekUsageBar.app without an Xcode project.
+# Build "DeepSeek Usage Bar.app" without an Xcode project.
 #
 #   ./build.sh              build for this machine's architecture
 #   ./build.sh --universal  build arm64 + x86_64 and lipo them together
@@ -19,10 +19,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."   # repo root
 
-APP_NAME="DeepSeekUsageBar"
+APP_NAME="DeepSeekUsageBar"            # executable inside the bundle
+BUNDLE_NAME="DeepSeek Usage Bar.app"   # what Finder and /Applications see
 SRC="Sources/DeepSeekUsageBar"
 BUILD_DIR="app/build"
-APP="$BUILD_DIR/$APP_NAME.app"
+APP="$BUILD_DIR/$BUNDLE_NAME"
 MIN_MACOS="13.0"
 
 SOURCES=("$SRC/DeepSeekUsageBar.swift" "$SRC/SettingsView.swift" "$SRC/PeakSchedule.swift" \
@@ -57,18 +58,20 @@ compile() {
 
 BIN="$BUILD_DIR/$APP_NAME"
 if [ "$UNIVERSAL" = "1" ]; then
-  echo "Building $APP_NAME $VERSION — universal (macOS $MIN_MACOS+)"
+  echo "Building $BUNDLE_NAME $VERSION — universal (macOS $MIN_MACOS+)"
   compile arm64  "$BUILD_DIR/$APP_NAME.arm64"
   compile x86_64 "$BUILD_DIR/$APP_NAME.x86_64"
   lipo -create -output "$BIN" "$BUILD_DIR/$APP_NAME.arm64" "$BUILD_DIR/$APP_NAME.x86_64"
   rm -f "$BUILD_DIR/$APP_NAME".{arm64,x86_64}
 else
-  echo "Building $APP_NAME $VERSION for $(uname -m) (macOS $MIN_MACOS+)"
+  echo "Building $BUNDLE_NAME $VERSION for $(uname -m) (macOS $MIN_MACOS+)"
   compile "$(uname -m)" "$BIN"
 fi
 chmod +x "$BIN"
 
-rm -rf "$APP"
+# The pre-0.5.1 build used the no-space name. Leaving it beside the new bundle
+# would make it look like two different apps.
+rm -rf "$APP" "$BUILD_DIR/DeepSeekUsageBar.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/$APP_NAME"
 cp app/Info.plist "$APP/Contents/Info.plist"
@@ -95,8 +98,8 @@ fi
 codesign --force --sign "${CODESIGN_IDENTITY:--}" "$APP" 2>/dev/null || true
 
 echo
-echo "Built $APP_NAME $VERSION"
+echo "Built $BUNDLE_NAME $VERSION"
 echo "Bundle:   $APP"
-echo "Install:  ditto \"$APP\" /Applications/$APP_NAME.app"
+echo "Install:  ditto \"$APP\" \"/Applications/$BUNDLE_NAME\""
 echo "Run it:   open \"$APP\""
 echo "Or:       \"$APP/Contents/MacOS/$APP_NAME\"   (logs to the terminal)"
